@@ -1,0 +1,26 @@
+{
+    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
+    "name": "uidesigntester",
+    "version": "0.0.1",
+    "dependencies": [
+        "rmlui",
+        {
+            "name": "sdl2",
+            "features": [
+                "wayland",
+                "x11"
+            ]
+        },
+        "libpng",
+        {
+            "name": "curl",
+            "default-features": false,
+            "features": [
+                "ssl"
+            ]
+        },
+        "glm",
+        "glad",
+        "fmt"
+    ]
+}
