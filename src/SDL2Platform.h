@@ -1,37 +1,79 @@
 #pragma once
 
-#include "BzfPlatform.h"
-
 #define SDL_MAIN_HANDLED
 
 #include <glad/glad.h>
 #include <SDL2/SDL.h>
 
+#include <string>
 #include <vector>
+#include <map>
+#include <functional>
 
-struct SDL2Monitor : public BzfMonitor
+struct BzfResolution
 {
-    int displayIndex;
+    int width;
+    int height;
+    int refreshRate;
+};
+
+typedef enum
+{
+    BZF_MOUSE_CONFINED_NONE = 0,
+    BZF_MOUSE_CONFINED_WINDOW = 1,
+    BZF_MOUSE_CONFINED_BOX = 2
+} BzfMouseConfinement;
+
+// Key actions
+typedef enum
+{
+    BZF_KEY_RELEASED = 0,
+    BZF_KEY_PRESSED,
+    BZF_KEY_REPEATED
+} BzfKeyAction;
+
+// Button actions
+typedef enum
+{
+    BZF_BUTTON_RELEASED = 0,
+    BZF_BUTTON_PRESSED
+} BzfButtonAction;
+
+typedef enum bzfglprofile
+{
+    BzfGLCompatibility,
+    BzfGLCore,
+    BzfGLES
+} BzfGLProfile;
+
+#define BZF_ICON_SIZE 64
+
+struct BzfIcon
+{
+    int    width;
+    int    height;
+    int    bytes_per_pixel; /* 2:RGB16, 3:RGB, 4:RGBA */
+    unsigned char  pixel_data[BZF_ICON_SIZE * BZF_ICON_SIZE * 4 + 1];
 };
 
 class SDL2Window;
-class SDL2Audio;
-class SDL2Joystick;
+//class SDL2Audio;
+//class SDL2Joystick;
 
-class SDL2Platform : public BzfPlatform
+class SDL2Platform
 {
 public:
     SDL2Platform();
     ~SDL2Platform();
 
-    BzfWindow* createWindow(int width, int height, BzfMonitor* monitor = nullptr, int positionX = -1, int positionY = -1);
-    BzfWindow* createWindow(BzfResolution resolution, BzfMonitor* monitor = nullptr);
+    SDL2Window* createWindow(int width, int height, int monitor = -1, int positionX = -1, int positionY = -1);
+    SDL2Window* createWindow(BzfResolution resolution, int monitor = -1);
 
     // Audio
-    BzfAudio* getAudio();
+    //SDL2Audio* getAudio();
 
     // Joysticks / Game Controllers
-    BzfJoystick* getJoystick();
+    //SDL2Joystick* getJoystick();
 
     bool isGameRunning() const;
 
@@ -39,10 +81,10 @@ public:
     double getGameTime() const;
 
     // Monitors
-    BzfMonitor* getPrimaryMonitor() const;
-    std::vector<BzfMonitor*> getMonitors() const;
-    BzfResolution getCurrentResolution(BzfMonitor* monitor = nullptr) const;
-    std::vector<BzfResolution> getResolutions(BzfMonitor* monitor = nullptr) const;
+    std::pair<int, std::string> getPrimaryMonitor() const;
+    std::map<int, std::string> getMonitors() const;
+    BzfResolution getCurrentResolution(int monitor) const;
+    std::vector<BzfResolution> getResolutions(int monitor) const;
 
     // OpenGL Attributes
     // Set requested OpenGL profile and version
@@ -54,34 +96,71 @@ public:
     // This will poll for events and call any set callbacks
     void pollEvents();
 
+    // Add a callback for the window resize event
+    // Callback arguments: SDL2Platform, SDL2Window, viewportWidth, viewportHeight
+    void addResizeCallback(std::function<void(SDL2Platform*, SDL2Window*, int width, int height)> callback);
+    // Add a callback for the window move event
+    // Callback arguments: SDL2Platform, SDL2Window, positionX, positionY
+    void addMoveCallback(std::function<void(SDL2Platform*, SDL2Window*, int x, int y)> callback);
+    // Set the callback for key events which reference the physical key
+    // Callback arguments: SDL2Platform, SDL2Window, SDL_Keycode, BzfKeyAction, Uint16
+    void addKeyCallback(std::function<void(SDL2Platform*, SDL2Window*, SDL_Keycode key, BzfKeyAction action, Uint16 mods)> callback);
+    // Set the callback for text events which reference the unicode code points of the OS defined keyboard layout
+    // Callback arguments: SDL2Platform, SDL2Window, unicode codepoint
+    void addTextCallback(std::function<void(SDL2Platform*, SDL2Window*, char text[32])> callback);
+    // Set the callback for mouse cursor movement
+    // Callback arguments: SDL2Platform, SDL2Window, x position, y position (with positions being relative to the top left corner of the window area)
+    void addCursorPosCallback(std::function<void(SDL2Platform*, SDL2Window*, double x, double y, Uint16 mods)> callback);
+    // Set the callback for mouse button presses
+    // Callback arguments: SDL2Platform, SDL2Window, button, action, mods
+    void addMouseButtonCallback(
+        std::function<void(SDL2Platform*, SDL2Window*, Uint8 button, BzfButtonAction action, Uint16 mods)> callback);
+    // Set the callback for the mouse wheel (or touchpad?) scrolling
+    // Callback arguments: SDL2Platform, SDL2Window, x offset, y offset
+    void addScrollCallback(std::function<void(SDL2Platform*, SDL2Window*, double x, double y)> callback);
+    // Joystick / Game Controller events
+    // Callback arguments: SDL2Platform, SDL2Event, button, state
+    /*void addJoystickButtonCallback(
+        std::function<void(SDL2Platform*, SDL2Window*, Uint8 button, BzfButtonAction action)> callback);*/
+
     void startTextInput();
     void stopTextInput();
     bool isTextInput();
 
+protected:
+    std::vector<std::function<void(SDL2Platform*,SDL2Window*,int,int)>> resizeCallbacks;
+    std::vector<std::function<void(SDL2Platform*,SDL2Window*,int,int)>> moveCallbacks;
+    std::vector<std::function<void(SDL2Platform*,SDL2Window*,SDL_Keycode,BzfKeyAction,Uint16)>> keyCallbacks;
+    std::vector<std::function<void(SDL2Platform*,SDL2Window*,char[32])>> textCallbacks;
+    std::vector<std::function<void(SDL2Platform*,SDL2Window*,double,double,Uint16)>> cursorPosCallbacks;
+    std::vector<std::function<void(SDL2Platform*,SDL2Window*,Uint8,BzfButtonAction,Uint16)>> mouseButtonCallbacks;
+    std::vector<std::function<void(SDL2Platform*,SDL2Window*,double,double)>> scrollCallbacks;
+    //std::vector<std::function<void(SDL2Platform*,SDL2Window*,Uint8,BzfButtonAction)>> joystickButtonCallbacks;
+
 private:
     std::vector<SDL2Window*> windows;
-    SDL2Audio *audio;
-    SDL2Joystick *joystick;
+    //SDL2Audio *audio;
+    //SDL2Joystick *joystick;
     Uint64 startTime;
 
-    BzfKey keyFromSDL(SDL_Keycode key);
-    int modsFromSDL(int sdlMods);
+    //BzfKey keyFromSDL(SDL_Keycode key);
+    //int modsFromSDL(int sdlMods);
     SDL2Window* getWindowFromSDLID(Uint32 id);
 };
 
-class SDL2Window : public BzfWindow
+class SDL2Window
 {
 public:
-    SDL2Window(int width, int height, SDL2Monitor* monitor = nullptr, int positionX = -1, int positionY = -1);
-    SDL2Window(BzfResolution resolution, SDL2Monitor* monitor = nullptr);
+    SDL2Window(int width, int height, int monitor = -1, int positionX = -1, int positionY = -1);
+    SDL2Window(BzfResolution resolution, int monitor = -1);
     ~SDL2Window();
 
     // Fullscreen/Windowed
     bool isFullscreen() const;
     bool setVerticalSync(bool sync) const;
     bool getWindowSize(int &width, int &height) const;
-    bool setWindowed(int width, int height, BzfMonitor* monitor = nullptr, int x = -1, int y = -1);
-    bool setFullscreen(BzfResolution resolution, BzfMonitor* monitor = nullptr);
+    bool setWindowed(int width, int height, int monitor = -1, int x = -1, int y = -1);
+    bool setFullscreen(BzfResolution resolution, int monitor = -1);
     void iconify() const;
     void setMinSize(int width, int height);
     void setTitle(const char *title);
@@ -106,6 +185,16 @@ public:
     float getGamma();
     bool hasGammaControl() const;
 
+    // User pointer (for storing a reference to some object instance, tied to this window)
+    void setUserPointer(void *pointer)
+    {
+        userPointer = pointer;
+    }
+    void* getUserPointer()
+    {
+        return userPointer;
+    }
+
     // SDL2 window specific methods
     void requestClose();
     bool shouldClose() const;
@@ -113,6 +202,9 @@ public:
 private:
     SDL_Window* window;
     SDL_GLContext glcontext;
+
+    void* userPointer;
+
     bool closeRequested;
     bool hasGamma;
 
@@ -120,7 +212,7 @@ private:
     int mouseBox[2][2];
 };
 
-class SDL2Audio : public BzfAudio
+/*class SDL2Audio
 {
 public:
     SDL2Audio();
@@ -155,15 +247,15 @@ private:
 
     bool (*userCallback)(void);
     SDL_AudioCVT convert;
-};
+};*/
 
-class SDL2Joystick : public BzfJoystick
+/*class SDL2Joystick
 {
 public:
     SDL2Joystick();
     virtual ~SDL2Joystick();
 
-    std::vector<BzfJoystickInfo*> getJoysticks();
+    std::vector<JoystickInfo*> getJoysticks();
 
     bool openDevice(int id);
     void closeDevice();
@@ -183,4 +275,4 @@ private:
     SDL_Joystick *device;
     SDL_Haptic *haptic;
     bool rumbleSupported;
-};
+};*/

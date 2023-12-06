@@ -1,0 +1,10 @@
+<template name="template" content="contents">
+<head>
+    <link type="text/rcss" href="../basic.rcss"/>
+    <link type="text/rcss" href="sandbox.rcss"/>
+</head>
+<body>
+    <div id="title"><h1>Title</h1></div>
+    <div id="contents"></div>
+</body>
+</template>

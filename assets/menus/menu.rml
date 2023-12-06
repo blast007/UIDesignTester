@@ -1,0 +1,11 @@
+<template name="menu" content="content">
+<head>
+    <link type="text/rcss" href="../basic.rcss"/>
+    <link type="text/rcss" href="../images/ui_big_pieces.rcss"/>
+    <link type="text/rcss" href="menu.rcss"/>
+</head>
+<body class="menu">
+    <div id="title"></div>
+    <div id="content"></div>
+</body>
+</template>

@@ -1,0 +1,25 @@
+@spritesheet theme 
+{
+    src: ui_big_pieces.tga;
+
+    /* For high dpi screens, designates the scaling it is intended to be shown at. */
+    resolution: 1x;
+
+    button-l: 634px 24px 39px 26px;
+    button-c: 676px 24px 38px 26px;
+    button-r: 717px 24px 39px 26px;
+
+    button-hover-l: 634px 54px 39px 26px;
+    button-hover-c: 676px 54px 38px 26px;
+    button-hover-r: 717px 54px 39px 26px;
+
+    button-active-l: 634px 84px 39px 26px;
+    button-active-c: 676px 84px 38px 26px;
+    button-active-r: 717px 84px 39px 26px;
+
+    radio: 818px 122px 12px 12px;
+    radio-checked: 831px 122px 12px 12px;
+
+    checkbox: 404px 452px 24px 24px;
+    checkbox-checked: 436px 452px 24px 24px;
+}

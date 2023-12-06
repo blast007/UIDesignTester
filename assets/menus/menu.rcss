@@ -1,0 +1,73 @@
+body
+{
+    width: 100%;
+    height: 100%;
+    background: rgba(0.0, 0.0, 0.0, 192.0);
+        font-family: LatoLatin;
+        font-weight: normal;
+        font-style: normal;
+        font-size: 25dp;
+        color: white;
+}
+
+#title {
+    margin-top: 10dp;
+    text-align: center;
+    font-size: 40dp;
+    font-weight: bold;
+}
+
+ul li {
+    display: block;
+}
+
+button {
+    display: inline-block;
+
+    width: 180dp;
+    padding: 5dp;
+    /*height: 26dp;*/
+
+    margin-bottom: 10dp;
+    decorator: tiled-horizontal( button-l, button-c, button-r );
+}
+
+button:hover,
+button:focus {
+    decorator: tiled-horizontal( button-hover-l, button-hover-c, button-hover-r );
+}
+
+button:active {
+    decorator: tiled-horizontal( button-active-l, button-active-c, button-active-r );
+}
+
+input[type=radio],
+input[type=checkbox] {
+    width: 24dp;
+    height: 24dp;
+    vertical-align: -4dp;
+}
+
+input[type=radio] ~ label,
+input[type=checkbox] ~ label {
+    display: inline-block;
+    width: 180dp;
+    text-align: left;
+    padding-left: 4dp;
+}
+
+input[type=radio] {
+    decorator: image(radio);
+}
+
+input[type=radio]:checked {
+    decorator: image(radio-checked);
+}
+
+input[type=checkbox] {
+    decorator: image(checkbox);
+}
+
+input[type=checkbox]:checked {
+    decorator: image(checkbox-checked);
+}

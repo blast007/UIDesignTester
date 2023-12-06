@@ -10,7 +10,7 @@
 // Platform
 ///////////////////////////////////////////////////////////
 
-SDL2Platform::SDL2Platform() : audio(nullptr), joystick(nullptr)
+SDL2Platform::SDL2Platform() /*: audio(nullptr), joystick(nullptr)*/
 {
     SDL_SetMainReady();
     if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_EVENTS | SDL_INIT_VIDEO) != 0)
@@ -33,6 +33,10 @@ SDL2Platform::SDL2Platform() : audio(nullptr), joystick(nullptr)
     // Enable double buffering
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
+    // Enable multisampling
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
+
 #ifdef _DEBUG
     // For debugging, set the start time of the program to be 184 days in the past to catch issues that may occur with long running programs
     startTime = SDL_GetPerformanceCounter() - (SDL_GetPerformanceFrequency() * 60 * 60 * 24 * 184);
@@ -52,21 +56,21 @@ SDL2Platform::~SDL2Platform()
     SDL_Quit();
 }
 
-BzfWindow* SDL2Platform::createWindow(int width, int height, BzfMonitor* monitor, int positionX, int positionY)
+SDL2Window* SDL2Platform::createWindow(int width, int height, int monitor, int positionX, int positionY)
 {
-    SDL2Window* window = new SDL2Window(width, height, static_cast<SDL2Monitor*>(monitor), positionX, positionY);
+    SDL2Window* window = new SDL2Window(width, height, monitor, positionX, positionY);
     windows.push_back(window);
     return window;
 }
 
-BzfWindow* SDL2Platform::createWindow(BzfResolution resolution, BzfMonitor* monitor)
+SDL2Window* SDL2Platform::createWindow(BzfResolution resolution, int monitor)
 {
-    SDL2Window* window = new SDL2Window(resolution, static_cast<SDL2Monitor*>(monitor));
+    SDL2Window* window = new SDL2Window(resolution, monitor);
     windows.push_back(window);
     return window;
 }
 
-BzfAudio* SDL2Platform::getAudio()
+/*BzfAudio* SDL2Platform::getAudio()
 {
     if (audio == nullptr)
         audio = new SDL2Audio();
@@ -78,7 +82,7 @@ BzfJoystick* SDL2Platform::getJoystick()
     if (joystick == nullptr)
         joystick = new SDL2Joystick();
     return joystick;
-}
+}*/
 
 bool SDL2Platform::isGameRunning() const
 {
@@ -96,35 +100,32 @@ double SDL2Platform::getGameTime() const
     return (double)(SDL_GetPerformanceCounter() - startTime) / SDL_GetPerformanceFrequency();
 }
 
-BzfMonitor* SDL2Platform::getPrimaryMonitor() const
+std::pair<int, std::string> SDL2Platform::getPrimaryMonitor() const
 {
-    SDL2Monitor* monitor = new SDL2Monitor;
-    monitor->displayIndex = 0;
-    monitor->name = SDL_GetDisplayName(0);
-    return monitor;
+    return std::make_pair(0, SDL_GetDisplayName(0));
 }
 
-std::vector<BzfMonitor*> SDL2Platform::getMonitors() const
+std::map<int, std::string> SDL2Platform::getMonitors() const
 {
-    std::vector<BzfMonitor*> monitors;
+    std::map<int, std::string> monitors;
+
     int count = SDL_GetNumVideoDisplays();
     for (int i = 0; i < count; i++)
     {
-        SDL2Monitor* monitor = new SDL2Monitor;
-        monitor->displayIndex = i;
-        monitor->name = SDL_GetDisplayName(i);
-        monitors.push_back(monitor);
+        monitors[i] = SDL_GetDisplayName(i);
     }
     return monitors;
 }
 
-BzfResolution SDL2Platform::getCurrentResolution(BzfMonitor* monitor) const
+BzfResolution SDL2Platform::getCurrentResolution(int monitor) const
 {
     BzfResolution resolution;
 
     SDL_DisplayMode current;
 
-    if (SDL_GetCurrentDisplayMode(static_cast<SDL2Monitor*>(monitor)->displayIndex, &current) == 0)
+
+
+    if (SDL_GetCurrentDisplayMode(monitor, &current) == 0)
     {
         resolution.width = current.w;
         resolution.height = current.h;
@@ -136,17 +137,16 @@ BzfResolution SDL2Platform::getCurrentResolution(BzfMonitor* monitor) const
     return resolution;
 }
 
-std::vector<BzfResolution> SDL2Platform::getResolutions(BzfMonitor* monitor) const
+std::vector<BzfResolution> SDL2Platform::getResolutions(int monitor) const
 {
     std::vector<BzfResolution> resolutions;
-    int displayIndex = (monitor != nullptr)?static_cast<SDL2Monitor*>(monitor)->displayIndex:0;
-    int count = SDL_GetNumDisplayModes(displayIndex);
+    int count = SDL_GetNumDisplayModes(monitor);
     SDL_DisplayMode mode;
 
     for (int i = 0; i < count; i++)
     {
         BzfResolution resolution;
-        if (SDL_GetDisplayMode(displayIndex, i, &mode) == 0)
+        if (SDL_GetDisplayMode(monitor, i, &mode) == 0)
         {
             resolution.width = mode.w;
             resolution.height = mode.h;
@@ -213,8 +213,7 @@ void SDL2Platform::pollEvents()
             {
                 if (keyCallbacks.size() > 0)
                 {
-                    BzfKey key = keyFromSDL(event.key.keysym.sym);
-                    if (key == BZF_KEY_UNKNOWN)
+                    if (event.key.keysym.sym == SDLK_UNKNOWN)
                         continue;
 
                     BzfKeyAction action = (event.key.state == SDL_PRESSED)?BZF_KEY_PRESSED:BZF_KEY_RELEASED;
@@ -222,10 +221,10 @@ void SDL2Platform::pollEvents()
                         action = BZF_KEY_REPEATED;
 
                     for (auto keyCallback : keyCallbacks)
-                        keyCallback(this, getWindowFromSDLID(event.key.windowID), key, action, modsFromSDL(event.key.keysym.mod));
+                        keyCallback(this, getWindowFromSDLID(event.key.windowID), event.key.keysym.sym, action, event.key.keysym.mod);
                 }
             }
-            else if (event.type == SDL_JOYBUTTONDOWN || event.type == SDL_JOYBUTTONUP)
+            /*else if (event.type == SDL_JOYBUTTONDOWN || event.type == SDL_JOYBUTTONUP)
             {
                 if (joystickButtonCallbacks.size() > 0)
                 {
@@ -319,7 +318,7 @@ void SDL2Platform::pollEvents()
                     for (auto joystickHatCallback : joystickHatCallbacks)
                         joystickHatCallback(this, getWindowFromSDLID(event.key.windowID), hat, direction);
                 }
-            }
+            }*/
             else if (event.type == SDL_TEXTINPUT)
             {
                 if (SDL_strlen(event.text.text) == 0 || event.text.text[0] == '\n')
@@ -339,34 +338,15 @@ void SDL2Platform::pollEvents()
     #endif
 
                 for (auto cursorPosCallback : cursorPosCallbacks)
-                    cursorPosCallback(this, window, event.motion.x, event.motion.y);
+                    cursorPosCallback(this, window, event.motion.x, event.motion.y, SDL_GetModState());
             }
             else if (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP)
             {
                 if (mouseButtonCallbacks.size() > 0)
                 {
-                    BzfMouseButton button;
-                    // Unlike joystick buttons/hats, however, SDL starts their mouse button numbering at 1...
-                    switch(event.button.button)
-                    {
-                    // *INDENT-OFF*
-                    case 1: button = BZF_MOUSE_LEFT; break;
-                    case 2: button = BZF_MOUSE_MIDDLE; break;
-                    case 3: button = BZF_MOUSE_RIGHT; break;
-                    case 4: button = BZF_MOUSE_4; break;
-                    case 5: button = BZF_MOUSE_5; break;
-                    case 6: button = BZF_MOUSE_6; break;
-                    case 7: button = BZF_MOUSE_7; break;
-                    case 8: button = BZF_MOUSE_8; break;
-                    default: button = BZF_MOUSE_UNKNOWN; break;
-                    // *INDENT-ON*
-                    }
-                    if (button == BZF_MOUSE_UNKNOWN)
-                        continue;
-
                     for (auto mouseButtonCallback : mouseButtonCallbacks)
-                        mouseButtonCallback(this, getWindowFromSDLID(event.button.windowID), button,
-                                            (event.button.state == SDL_PRESSED)?BZF_BUTTON_PRESSED:BZF_BUTTON_RELEASED, modsFromSDL(SDL_GetModState()));
+                        mouseButtonCallback(this, getWindowFromSDLID(event.button.windowID), event.button.button,
+                                            (event.button.state == SDL_PRESSED)?BZF_BUTTON_PRESSED:BZF_BUTTON_RELEASED, SDL_GetModState());
                 }
             }
             else if (event.type == SDL_MOUSEWHEEL)
@@ -378,6 +358,48 @@ void SDL2Platform::pollEvents()
         }
     }
 }
+
+void SDL2Platform::addResizeCallback(std::function<void(SDL2Platform *, SDL2Window *, int, int)> callback)
+{
+    resizeCallbacks.push_back(callback);
+}
+
+void SDL2Platform::addMoveCallback(std::function<void(SDL2Platform *, SDL2Window *, int, int)> callback)
+{
+    moveCallbacks.push_back(callback);
+}
+
+void SDL2Platform::addKeyCallback(std::function<void(SDL2Platform *, SDL2Window *, SDL_Keycode, BzfKeyAction, Uint16)> callback)
+{
+    keyCallbacks.push_back(callback);
+}
+
+void SDL2Platform::addTextCallback(std::function<void(SDL2Platform *, SDL2Window *, char[32])> callback)
+{
+    textCallbacks.push_back(callback);
+}
+
+void SDL2Platform::addCursorPosCallback(std::function<void(SDL2Platform *, SDL2Window *, double, double, Uint16)> callback)
+{
+    cursorPosCallbacks.push_back(callback);
+}
+
+void SDL2Platform::addMouseButtonCallback(
+    std::function<void(SDL2Platform *, SDL2Window *, Uint8, BzfButtonAction, Uint16)> callback)
+{
+    mouseButtonCallbacks.push_back(callback);
+}
+
+void SDL2Platform::addScrollCallback(std::function<void(SDL2Platform *, SDL2Window *, double, double)> callback)
+{
+    scrollCallbacks.push_back(callback);
+}
+
+/*void SDL2Platform::addJoystickButtonCallback(
+    std::function<void(SDL2Platform *, SDL2Window *, Uint8, BzfButtonAction)> callback)
+{
+    joystickButtonCallbacks.push_back(callback);
+}*/
 
 void SDL2Platform::startTextInput()
 {
@@ -394,7 +416,7 @@ bool SDL2Platform::isTextInput()
     return SDL_IsTextInputActive() == SDL_TRUE;
 }
 
-BzfKey SDL2Platform::keyFromSDL(SDL_Keycode key)
+/*BzfKey SDL2Platform::keyFromSDL(SDL_Keycode key)
 {
     switch (key)
     {
@@ -532,7 +554,7 @@ int SDL2Platform::modsFromSDL(int sdlMods)
     if (sdlMods & KMOD_GUI)
         mods = mods | BZF_MOD_SUPER;
     return mods;
-}
+}*/
 
 SDL2Window* SDL2Platform::getWindowFromSDLID(Uint32 id)
 {
@@ -546,7 +568,7 @@ SDL2Window* SDL2Platform::getWindowFromSDLID(Uint32 id)
 // Window
 ///////////////////////////////////////////////////////////
 
-SDL2Window::SDL2Window(int width, int height, SDL2Monitor* _monitor, int x, int y) : BzfWindow(), closeRequested(false),
+SDL2Window::SDL2Window(int width, int height, int monitor, int x, int y) : userPointer(nullptr), closeRequested(false),
     hasGamma(true), mouseConfinementMode(BZF_MOUSE_CONFINED_NONE)
 {
     mouseBox[0][0] = 0;
@@ -555,24 +577,19 @@ SDL2Window::SDL2Window(int width, int height, SDL2Monitor* _monitor, int x, int 
     mouseBox[0][1] = 0;
 
     int displayCount = SDL_GetNumVideoDisplays();
-    SDL2Monitor* monitor;
-    if (_monitor == nullptr || _monitor->displayIndex >= displayCount)
+    if (monitor == -1 || monitor >= displayCount)
     {
         // TODO: Handle this better
-        if (_monitor != nullptr)
-            std::cerr << "WARNING: Requested monitor index " << _monitor->displayIndex << " but only " << displayCount << " display"
+        if (monitor != -1)
+            std::cerr << "WARNING: Requested monitor index " << monitor << " but only " << displayCount << " display"
                       << ((displayCount != 1)?"s are":" is") << " attached. Using primary display instead." << std::endl;
-        monitor = new SDL2Monitor;
-        monitor->displayIndex = 0;
-        monitor->name = SDL_GetDisplayName(0);
+        monitor = 0;
     }
-    else
-        monitor = _monitor;
 
     if (x == -1)
-        x = SDL_WINDOWPOS_CENTERED_DISPLAY(monitor->displayIndex);
+        x = SDL_WINDOWPOS_CENTERED_DISPLAY(monitor);
     if (y == -1)
-        y = SDL_WINDOWPOS_CENTERED_DISPLAY(monitor->displayIndex);
+        y = SDL_WINDOWPOS_CENTERED_DISPLAY(monitor);
 
     window = SDL_CreateWindow("", x, y, width, height,
                               SDL_WINDOW_OPENGL|SDL_WINDOW_ALLOW_HIGHDPI|SDL_WINDOW_RESIZABLE);
@@ -582,6 +599,9 @@ SDL2Window::SDL2Window(int width, int height, SDL2Monitor* _monitor, int x, int 
         std::cerr << "Error: Unable to create window." << std::endl;
         exit(-1);
     }
+
+    // Set the window to always on top
+    SDL_SetWindowAlwaysOnTop(window, SDL_TRUE);
 
     // Store a pointer to this SDL2Window inside the SDL window
     SDL_SetWindowData(window, "SDL2Window", this);
@@ -593,7 +613,7 @@ SDL2Window::SDL2Window(int width, int height, SDL2Monitor* _monitor, int x, int 
 }
 
 // TODO: Handle refresh rate - Might have to start windowed and then set the display mode using SDL_SetWindowDisplayMode, and finally switching to fullscreen
-SDL2Window::SDL2Window(BzfResolution resolution, SDL2Monitor* _monitor) : BzfWindow(), closeRequested(false),
+SDL2Window::SDL2Window(BzfResolution resolution, int monitor) : userPointer(nullptr), closeRequested(false),
     hasGamma(true), mouseConfinementMode(BZF_MOUSE_CONFINED_NONE)
 {
     mouseBox[0][0] = 0;
@@ -602,34 +622,29 @@ SDL2Window::SDL2Window(BzfResolution resolution, SDL2Monitor* _monitor) : BzfWin
     mouseBox[0][1] = 0;
 
     int displayCount = SDL_GetNumVideoDisplays();
-    SDL2Monitor* monitor;
-    if (_monitor == nullptr || _monitor->displayIndex >= displayCount)
+    if (monitor == -1 || monitor >= displayCount)
     {
         // TODO: Handle this better
-        if (_monitor != nullptr)
-            std::cerr << "WARNING: Requested monitor index " << _monitor->displayIndex << " but only " << displayCount << " display"
+        if (monitor != -1)
+            std::cerr << "WARNING: Requested monitor index " << monitor << " but only " << displayCount << " display"
                       << ((displayCount != 1)?"s are":" is") << " attached. Using primary display instead." << std::endl;
-        monitor = new SDL2Monitor;
-        monitor->displayIndex = 0;
-        monitor->name = SDL_GetDisplayName(0);
+        monitor = 0;
     }
-    else
-        monitor = _monitor;
 
 #ifdef __linux__
     // Work around an issue in Linux with Gnome 3 + Windows List extension: https://bugzilla.libsdl.org/show_bug.cgi?id=4990
     // Create windowed first, and then switch to fullscreen
     if (displayCount >= 2)
     {
-        window = SDL_CreateWindow("", SDL_WINDOWPOS_CENTERED_DISPLAY(_monitor->displayIndex),
-                                  SDL_WINDOWPOS_CENTERED_DISPLAY(_monitor->displayIndex), 640, 480, SDL_WINDOW_OPENGL|SDL_WINDOW_ALLOW_HIGHDPI);
-        setFullscreen(resolution, _monitor);
+        window = SDL_CreateWindow("", SDL_WINDOWPOS_CENTERED_DISPLAY(monitor),
+                                  SDL_WINDOWPOS_CENTERED_DISPLAY(monitor), 640, 480, SDL_WINDOW_OPENGL|SDL_WINDOW_ALLOW_HIGHDPI);
+        setFullscreen(resolution, monitor);
     }
     else
     {
 #endif
-        window = SDL_CreateWindow("", SDL_WINDOWPOS_CENTERED_DISPLAY(_monitor->displayIndex),
-                                  SDL_WINDOWPOS_CENTERED_DISPLAY(_monitor->displayIndex), resolution.width, resolution.height,
+        window = SDL_CreateWindow("", SDL_WINDOWPOS_CENTERED_DISPLAY(monitor),
+                                  SDL_WINDOWPOS_CENTERED_DISPLAY(monitor), resolution.width, resolution.height,
                                   SDL_WINDOW_OPENGL|SDL_WINDOW_ALLOW_HIGHDPI|SDL_WINDOW_FULLSCREEN);
 #ifdef __linux__
     }
@@ -688,31 +703,26 @@ bool SDL2Window::getWindowSize(int &width, int &height) const
     return true;
 }
 
-bool SDL2Window::setWindowed(int width, int height, BzfMonitor* _monitor, int positionX, int positionY)
+bool SDL2Window::setWindowed(int width, int height, int monitor, int positionX, int positionY)
 {
     int displayCount = SDL_GetNumVideoDisplays();
-    SDL2Monitor* monitor;
-    if (_monitor == nullptr || static_cast<SDL2Monitor*>(_monitor)->displayIndex >= displayCount)
+    if (monitor == -1 || monitor >= displayCount)
     {
         // TODO: Handle this better
-        if (_monitor != nullptr)
+        if (monitor != -1)
         {
-            std::cerr << "WARNING: Requested monitor index " << static_cast<SDL2Monitor*>(_monitor)->displayIndex << " but only " <<
+            std::cerr << "WARNING: Requested monitor index " << monitor << " but only " <<
                       displayCount << " display" << ((displayCount != 1)?"s are":" is") << " attached. Using primary display instead." <<
                       std::endl;
             return false;
         }
-        monitor = new SDL2Monitor;
-        monitor->displayIndex = 0;
-        monitor->name = SDL_GetDisplayName(0);
+        monitor = 0;
     }
-    else
-        monitor = static_cast<SDL2Monitor*>(_monitor);
 
     if (positionX == -1)
-        positionX = SDL_WINDOWPOS_CENTERED_DISPLAY(monitor->displayIndex);
+        positionX = SDL_WINDOWPOS_CENTERED_DISPLAY(monitor);
     if (positionY == -1)
-        positionY = SDL_WINDOWPOS_CENTERED_DISPLAY(monitor->displayIndex);
+        positionY = SDL_WINDOWPOS_CENTERED_DISPLAY(monitor);
 
     SDL_SetWindowFullscreen(window, 0);
     SDL_SetWindowSize(window, width, height);
@@ -721,33 +731,28 @@ bool SDL2Window::setWindowed(int width, int height, BzfMonitor* _monitor, int po
     return true;
 }
 
-bool SDL2Window::setFullscreen(BzfResolution resolution, BzfMonitor* _monitor)
+bool SDL2Window::setFullscreen(BzfResolution resolution, int monitor)
 {
     int displayCount = SDL_GetNumVideoDisplays();
-    SDL2Monitor* monitor;
-    if (_monitor == nullptr || static_cast<SDL2Monitor*>(_monitor)->displayIndex >= displayCount)
+    if (monitor == -1 || monitor >= displayCount)
     {
         // TODO: Handle this better
-        if (_monitor != nullptr)
+        if (monitor != -1)
         {
-            std::cerr << "WARNING: Requested monitor index " << static_cast<SDL2Monitor*>(_monitor)->displayIndex << " but only " <<
+            std::cerr << "WARNING: Requested monitor index " << monitor << " but only " <<
                       displayCount << " display" << ((displayCount != 1)?"s are":" is") << " attached. Using primary display instead." <<
                       std::endl;
             return false;
         }
-        monitor = new SDL2Monitor;
-        monitor->displayIndex = 0;
-        monitor->name = SDL_GetDisplayName(0);
+        monitor = 0;
     }
-    else
-        monitor = static_cast<SDL2Monitor*>(_monitor);
 
     // Find the closest valid display mode
     SDL_DisplayMode requested, closest;
     requested.w = resolution.width;
     requested.h = resolution.height;
     requested.refresh_rate = resolution.refreshRate;
-    if (SDL_GetClosestDisplayMode(static_cast<SDL2Monitor*>(monitor)->displayIndex, &requested, &closest) == nullptr)
+    if (SDL_GetClosestDisplayMode(monitor, &requested, &closest) == nullptr)
         return false;
 
     // Make the mode switch
@@ -937,7 +942,7 @@ bool SDL2Window::shouldClose() const
 // Audio
 ///////////////////////////////////////////////////////////
 
-SDL2Audio::SDL2Audio() : dev(0)
+/*SDL2Audio::SDL2Audio() : dev(0)
 {
     if (!(SDL_WasInit(SDL_INIT_AUDIO) != 0))
     {
@@ -991,7 +996,7 @@ bool SDL2Audio::openDevice(const char *name)
              desired.format, desired.channels, obtained.freq,
              obtained.format, obtained.channels, obtained.freq) == -1)
     {
-        /* Check that the convert was built */
+        // Check that the convert was built
         printf("Could not build converter for audio: %s\n", SDL_GetError());
         closeDevice();
         return false;
@@ -1140,11 +1145,11 @@ float*      SDL2Audio::doReadSound(const std::string &filename, int &numFrames,
     if (!SDL_LoadWAV(filename.c_str(), &wav_spec, &wav_buffer, &wav_length))
         return NULL;
 
-    /* Build AudioCVT */
+    // Build AudioCVT
     ret = SDL_BuildAudioCVT(&wav_cvt,
                             wav_spec.format, wav_spec.channels, wav_spec.freq,
                             AUDIO_S16SYS, 2, audioOutputRate);
-    /* Check that the convert was built */
+    // Check that the convert was built
     if (ret == -1)
     {
         printf("Could not build converter for Wav file %s: %s.\n",
@@ -1152,11 +1157,11 @@ float*      SDL2Audio::doReadSound(const std::string &filename, int &numFrames,
         SDL_FreeWAV(wav_buffer);
         return NULL;
     }
-    /* Setup for conversion */
+    // Setup for conversion
     wav_cvt.buf = (Uint8*)malloc(wav_length * wav_cvt.len_mult);
     wav_cvt.len = wav_length;
     memcpy(wav_cvt.buf, wav_buffer, wav_length);
-    /* And now we're ready to convert */
+    // And now we're ready to convert
     SDL_ConvertAudio(&wav_cvt);
     numFrames = (int)(wav_length * wav_cvt.len_ratio / 4);
     cvt16     = (int16_t *)wav_cvt.buf;
@@ -1166,13 +1171,13 @@ float*      SDL2Audio::doReadSound(const std::string &filename, int &numFrames,
     free(wav_cvt.buf);
     SDL_FreeWAV(wav_buffer);
     return data;
-}
+}*/
 
 ///////////////////////////////////////////////////////////
 // Joystick / Game Controller
 ///////////////////////////////////////////////////////////
 
-SDL2Joystick::SDL2Joystick() : device(nullptr), haptic(nullptr), rumbleSupported(false)
+/*SDL2Joystick::SDL2Joystick() : device(nullptr), haptic(nullptr), rumbleSupported(false)
 {
     if (!(SDL_WasInit(SDL_INIT_GAMECONTROLLER) != 0))
     {
@@ -1210,13 +1215,12 @@ std::vector<BzfJoystickInfo*> SDL2Joystick::getJoysticks()
     }
 
     int numJoysticks = SDL_NumJoysticks();
-    SDL_Joystick* sdljoy;
     for (int i = 0; i < numJoysticks; ++i)
     {
-        BzfJoystickInfo* joystick = new BzfJoystickInfo;
-        sdljoy = SDL_JoystickOpen(i);
+        SDL_Joystick* sdljoy = SDL_JoystickOpen(i);
         if (sdljoy != nullptr)
         {
+            BzfJoystickInfo* joystick = new BzfJoystickInfo;
             joystick->id = i;
             joystick->guid = new char[33];
             SDL_JoystickGetGUIDString(SDL_JoystickGetGUID(sdljoy), const_cast<char*>(joystick->guid), 33);
@@ -1315,4 +1319,4 @@ void SDL2Joystick::rumble(float strength, unsigned int duration)
 float SDL2Joystick::getAxis(int axis)
 {
     return SDL_JoystickGetAxis(device, axis) / 32768.0f;
-}
+}*/

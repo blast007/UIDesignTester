@@ -1,0 +1,33 @@
+<rml>
+<head>
+    <title>Sandbox</title>
+    <link type="text/template" href="sandbox_template.rml" />
+</head>
+<body template="template">
+    <div>
+        <div id="content">This is some content</div>
+        <div id="form">
+            <ul id="buttons">
+                <li><button>Button 1</button></li>
+                <li><button>Button 2</button></li>
+                <li><button>Button 3</button></li>
+                <li><button>Button 4</button></li>
+            </ul>
+
+            <ul id="radiobuttons">
+                <li><input type="radio" name="radios" /> Option 1</li>
+                <li><input type="radio" name="radios" /> Option 2</li>
+                <li><input type="radio" name="radios" /> Option 3</li>
+            </ul>
+
+            <select>
+                <option>Option 1</option>
+                <option>Option 2</option>
+                <option>Option 3</option>
+                <option>Option 4</option>
+                <option>Option 5</option>
+            </select>
+        </div>
+    </div>
+</body>
+</rml>

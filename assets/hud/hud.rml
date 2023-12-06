@@ -1,0 +1,54 @@
+<rml>
+<head>
+    <title>HUD</title>
+    <link type="text/rcss" href="../basic.rcss"/>
+    <link type="text/rcss" href="hud.rcss"/>
+</head>
+<body>
+<div id="hud" data-model="hud">
+    <div id="userInfo">
+        <img src="../images/playericon.tga" /> {{local.name}}: {{local.score}} ({{ team_name(4) }} Team)
+    </div>
+
+    <table id="scoreboard">
+        <col/>
+        <col/>
+        <col/>
+        <col/>
+        <col/>
+        <col/>
+        <col/>
+        <thead data-if="players.size > 0">
+            <tr>
+                <th data-style-width="scoreboard_widths[0] + 'px'" class="mr-1 ta-center">Score</th>
+                <th data-style-width="scoreboard_widths[1] + 'px'" class="ta-right" />
+                <th data-style-width="scoreboard_widths[2] + 'px'" />
+                <th data-style-width="scoreboard_widths[3] + 'px'" class="mr-1" />
+                <th data-style-width="scoreboard_widths[4] + 'px'" class="mr-1 ta-right" />
+                <th data-style-width="scoreboard_widths[5] + 'px'" class="mr-2 ta-center">PVP</th>
+                <th data-style-width="scoreboard_widths[6] + 'px'" class="mr-1" />
+                <th data-style-width="scoreboard_widths[7] + 'px'">Player</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr data-for="player : players" data-attr-class="'sb-row ' + team_class_name(player.team)">
+                <td class="sb-score">{{player.kills - player.deaths - player.teamkills}}</td>
+                <td class="sb-kills">{{player.kills}}</td>
+                <td class="sb-divider">-</td>
+                <td class="sb-deaths">{{player.deaths}}</td>
+                <td class="sb-tks">[{{player.teamkills}}]</td>
+                <td class="sb-pvp">42~42</td>
+                <td class="sb-status">+</td>
+                <td class="sb-restofit">{{player.player_id}} - {{player.name}} ({{player.motto}})<span data-if="player.flag != ''">/<em>{{player.flag}}</em></span></td>
+            </tr>
+        </tbody>
+    </table>
+
+
+    <div id="radar">
+        Insert radar here
+    </div>
+    <div id="console" data-rml="messages" />
+</div>
+</body>
+</rml>

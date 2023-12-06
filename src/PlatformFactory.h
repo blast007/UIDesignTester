@@ -1,9 +1,9 @@
 #pragma once
 
-#include "BzfPlatform.h"
+#include "SDL2Platform.h"
 
 class PlatformFactory
 {
 public:
-    static BzfPlatform* get();
+    static SDL2Platform* get();
 };

@@ -1,7 +1,5 @@
 #include "GLCube.h"
 
-#include "BzfPlatform.h"
-
 #include <iostream>
 #include <string.h>
 #include <stdexcept>
