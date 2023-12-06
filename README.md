@@ -6,23 +6,23 @@ This is a test application an RmlUi-based interface for BZFlag.
 
 Keybinds
 --------
-* F12: Quit
-* F5 or Ctrl+R: Reloads the RML and RCSS documents
-* `: Sandbox Mode (hides the HUD and render assets/sandbox/sandbox.rml)
-* 1: Main Menu (render assets/menus/main.rml)
-* 2: Options Menu (render assets/menus/options.rml)
-* 3: Host Menu (Server hosting) (render assets/menus/host.rml)
-* 4: Help Menu (render assets/menus/help.rml)
-* 0: No menu (just renders the HUD via assets/hud/hud.rml)
-* Tab: Toggles the RmlUi debugger UI
-* q: Sets the local player name, which will reflect in the HUD
-* w: Sets the local player score to 1337
-* e: Sets the local player score to a random value
-* r: Adds a remote player with a random team
-* a: Sets a random player kills to a random value
-* s: Sets a random player deaths to a random value
-* d: Sets a random player teamkills to a random value
-* f: Sets a random player to have either GM or L flags
+* `F12`: Quit
+* `F5` or `Ctrl+R`: Reloads the RML and RCSS documents
+* `` ` ``: Sandbox Mode (hides the HUD and render assets/sandbox/sandbox.rml)
+* `1`: Main Menu (render assets/menus/main.rml)
+* `2`: Options Menu (render assets/menus/options.rml)
+* `3`: Host Menu (Server hosting) (render assets/menus/host.rml)
+* `4`: Help Menu (render assets/menus/help.rml)
+* `0`: No menu (just renders the HUD via assets/hud/hud.rml)
+* `Tab`: Toggles the RmlUi debugger UI
+* `q`: Sets the local player name, which will reflect in the HUD
+* `w`: Sets the local player score to 1337
+* `e`: Sets the local player score to a random value
+* `r`: Adds a remote player with a random team
+* `a`: Sets a random player kills to a random value
+* `s`: Sets a random player deaths to a random value
+* `d`: Sets a random player teamkills to a random value
+* `f`: Sets a random player to have either GM or L flags
 
 
 License
