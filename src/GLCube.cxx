@@ -81,7 +81,7 @@ GLCube::GLCube(int width, int height)
 
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
-    glReleaseShaderCompiler();
+    //glReleaseShaderCompiler();
 
     if (!program)
     {

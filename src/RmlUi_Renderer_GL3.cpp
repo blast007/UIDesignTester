@@ -651,7 +651,10 @@ bool RenderInterface_GL3::GenerateTexture(Rml::TextureHandle& texture_handle, co
 
 void RenderInterface_GL3::ReleaseTexture(Rml::TextureHandle texture_handle)
 {
+	// For some reason, this is crashing on Windows, so just skip this for now.
+#ifndef _WIN32
 	glDeleteTextures(1, (GLuint*)&texture_handle);
+#endif
 }
 
 void RenderInterface_GL3::SetTransform(const Rml::Matrix4f* new_transform)
