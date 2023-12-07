@@ -7,6 +7,8 @@
 #include <fmt/format.h>
 
 #include <iostream>
+#include <stdlib.h>
+#include <time.h>
 
 #define MESSAGE_LEN 1024
 
@@ -57,27 +59,27 @@ void handleKey(SDL2Platform* /*platform*/, SDL2Window* /*window*/, SDL_Keycode k
             HUDModel::setLocalPlayerScore(1337);
         }
         else if (key == SDLK_e) {
-            HUDModel::setLocalPlayerScore((random() % 200) - 100);
+            HUDModel::setLocalPlayerScore((rand() % 200) - 100);
         }
         else if (key == SDLK_r) {
-            HUDModel::addRemotePlayer(player_index, fmt::format("Player {}", player_index+1), TeamColor(RogueTeam + (random() % 4)));
+            HUDModel::addRemotePlayer(player_index, fmt::format("Player {}", player_index+1), TeamColor(RogueTeam + (rand() % 4)));
             player_index++;
         }
         else if (key == SDLK_a) {
             if (player_index > 0)
-                HUDModel::setRemotePlayerKills(random() % player_index, random() % 100);
+                HUDModel::setRemotePlayerKills(rand() % player_index, rand() % 100);
         }
         else if (key == SDLK_s) {
             if (player_index > 0)
-                HUDModel::setRemotePlayerDeaths(random() % player_index, random() % 40);
+                HUDModel::setRemotePlayerDeaths(rand() % player_index, rand() % 40);
         }
         else if (key == SDLK_d) {
             if (player_index > 0)
-                HUDModel::setRemotePlayerTeamkills(random() % player_index, random() % 10);
+                HUDModel::setRemotePlayerTeamkills(rand() % player_index, rand() % 10);
         }
         else if (key == SDLK_f) {
             if (player_index > 0)
-                HUDModel::setRemotePlayerFlag(random() % player_index, (random() % 2 == 1)?"GM":"L");
+                HUDModel::setRemotePlayerFlag(rand() % player_index, (rand() % 2 == 1)?"GM":"L");
         }
     }
 }
@@ -91,7 +93,7 @@ void handleResize(SDL2Platform* /*platform*/, SDL2Window* window, int width, int
 int main()
 {
     // Seed some randomness
-    srandom(time(nullptr));
+    srand(time(nullptr));
 
     // Get the platform factory
     SDL2Platform* platform = PlatformFactory::get();

@@ -24,6 +24,41 @@ Keybinds
 * `d`: Sets a random player teamkills to a random value
 * `f`: Sets a random player to have either GM or L flags
 
+Building
+--------
+
+This assumes that CMake is installed.
+
+Linux:
+
+```shell
+mkdir $HOME/code
+cd $HOME/code
+git clone https://github.com/Microsoft/vcpkg.git
+./vcpkg/bootstrap-vcpkg.sh --disableMetrics
+git clone https://github.com/blast007/UIDesignTester
+cd UIDesignTester
+cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=$HOME/code/vcpkg/scripts/buildsystems/vcpkg.cmake
+cd build
+make -j$(nproc)
+```
+
+Windows:
+
+```bat
+mkdir %USERPROFILE%\code
+cd /d %USERPROFILE%\code
+git clone https://github.com/Microsoft/vcpkg.git
+cd vcpkg
+bootstrap-vcpkg.bat -disableMetrics
+vcpkg integrate install
+cd ..
+git clone https://github.com/blast007/UIDesignTester
+cd UIDesignTester
+cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=%USERPROFILE%/code/vcpkg/scripts/buildsystems/vcpkg.cmake
+cmake --build build
+```
+
 
 License
 -------

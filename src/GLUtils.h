@@ -2,6 +2,7 @@
 
 #include <glad/glad.h>
 #include <iostream>
+#include <string>
 
 #define GL_ERROR_DBG(action) GLUtils::getGLError(action, __FILE__, __LINE__)
 

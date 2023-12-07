@@ -6,10 +6,15 @@
         "rmlui",
         {
             "name": "sdl2",
+            "platform": "linux",
             "features": [
                 "wayland",
                 "x11"
             ]
+        },
+        {
+            "name": "sdl2",
+            "platform": "!linux"
         },
         "libpng",
         {
