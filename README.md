@@ -59,6 +59,20 @@ cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=%USERPROFILE%/code/vcpkg/scripts/buil
 cmake --build build
 ```
 
+macOS:
+
+```shell
+mkdir $HOME/code
+cd $HOME/code
+git clone https://github.com/Microsoft/vcpkg.git
+./vcpkg/bootstrap-vcpkg.sh --disableMetrics
+git clone https://github.com/blast007/UIDesignTester
+cd UIDesignTester
+alias cmake=/Applications/CMake.app/Contents/bin/cmake
+cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=$HOME/code/vcpkg/scripts/buildsystems/vcpkg.cmake
+cmake --build build
+```
+
 
 License
 -------
